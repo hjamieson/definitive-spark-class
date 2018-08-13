@@ -17,4 +17,3 @@ libraryDependencies += "org.apache.hbase" % "hbase-client" % "1.2.0-cdh5.12.1"
 
 libraryDependencies += "org.apache.hbase" % "hbase-server" % "1.2.0-cdh5.12.1"
 libraryDependencies += "org.apache.hbase" % "hbase-common" % "1.2.0-cdh5.12.1"
-libraryDependencies += "org.apache.hbase" % "hbase-spark" % "1.2.0-cdh5.12.1"
