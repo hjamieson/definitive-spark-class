@@ -1,12 +1,11 @@
 package example
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.hadoop.hbase.client.{ConnectionFactory, Put}
 import org.apache.hadoop.hbase.{HBaseConfiguration, TableName}
 import org.apache.spark.{SparkConf, SparkContext}
 
-import collection.JavaConverters._
 import scala.collection.mutable
+import scala.util.parsing.json._
 
 /**
   * Description:
@@ -19,20 +18,18 @@ import scala.collection.mutable
 object ImportData {
   def main(args: Array[String]): Unit = {
     require(args.length > 1, "args: <input-json(hdfs)> <target-table(hbase)>")
-    val table = TableName.valueOf(args(1))
     val inputJson = args(0)
+    val table = args(1)
 
     // initialize the spark engine
     val sparkConf = new SparkConf().setAppName("HBase Table Import")
     val sc = new SparkContext(sparkConf)
 
     // load the data
-    val om = new ObjectMapper()
     val rdd = sc.textFile(inputJson).map(j => {
       val parts = j.split(raw"\t")
-      val m = om.readValue(parts(1), classOf[java.util.Map[String, String]]).asScala
-      m("key")= parts(0)
-      m
+      val m = JSON.parseFull(parts(1)).get.asInstanceOf[Map[String,Any]]
+      m + ("key"-> parts(0))
     })
 
 
@@ -40,7 +37,7 @@ object ImportData {
     rdd.foreachPartition { part =>
       val hbc = HBaseConfiguration.create()
       val conn = ConnectionFactory.createConnection(hbc)
-      val htable = conn.getTable(table)
+      val htable = conn.getTable(tn(table))
 
       part.foreach(rec => {
         val put = makePut(rec, "d".getBytes())
@@ -61,12 +58,15 @@ object ImportData {
     * @param key
     * @return
     */
-  def makePut(record: mutable.Map[String, String], cf: Array[Byte]): Put = {
-    val put = new Put(record("key").getBytes)
+  def makePut(record: Map[String, Any], cf: Array[Byte]): Put = {
+    val put = new Put(record("key").toString.getBytes())
     record.seq.filter(_._1 != "key").foreach(t => {
-      put.addColumn(cf, t._1.getBytes(), t._2.getBytes())
+      put.addColumn(cf, t._1.toString.getBytes(), t._2.toString.getBytes())
     })
+//    put.addColumn(cf, "f1".getBytes, "data".getBytes())
     put
   }
+
+  def tn(strTableName:String): TableName = TableName.valueOf(strTableName)
 
 }
