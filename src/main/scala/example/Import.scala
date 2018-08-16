@@ -4,7 +4,6 @@ import org.apache.hadoop.hbase.client.{ConnectionFactory, Put}
 import org.apache.hadoop.hbase.{HBaseConfiguration, TableName}
 import org.apache.spark.{SparkConf, SparkContext}
 
-import scala.collection.mutable
 import scala.util.parsing.json._
 
 /**
@@ -25,11 +24,11 @@ object ImportData {
     val sparkConf = new SparkConf().setAppName("HBase Table Import")
     val sc = new SparkContext(sparkConf)
 
-    // load the data
+    // load the data from the file in HDFS (key <tab> {json})
     val rdd = sc.textFile(inputJson).map(j => {
       val parts = j.split(raw"\t")
       val m = JSON.parseFull(parts(1)).get.asInstanceOf[Map[String,Any]]
-      m + ("key"-> parts(0))
+      m + ("key"-> parts(0))  // tack the key onto the map
     })
 
 
@@ -40,7 +39,7 @@ object ImportData {
       val htable = conn.getTable(tn(table))
 
       part.foreach(rec => {
-        val put = makePut(rec, "d".getBytes())
+        val put = makePut(rec, "d".getBytes())  // don't mind the static CF!  I am lazy!
         htable.put(put)
       })
 
@@ -52,7 +51,7 @@ object ImportData {
 
   /**
     * creates a put using the given key as the rowkey, and the map as the columns.  We assume
-    * the CF is "d", and the map has a "key" value to use as the rowkey
+    * the CF is "d", and the map has a "key" value to use as the rowkey.
     *
     * @param record
     * @param key
