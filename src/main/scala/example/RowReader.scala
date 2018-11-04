@@ -1,11 +1,10 @@
 package example
 
-import org.apache.hadoop.hbase.{CellUtil, HBaseConfiguration}
 import org.apache.hadoop.hbase.client.Result
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat
 import org.apache.hadoop.hbase.util.Bytes
-import org.apache.spark.sql.SparkSession
+import org.apache.hadoop.hbase.{CellUtil, HBaseConfiguration}
 import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.collection.mutable
@@ -24,7 +23,6 @@ object RowReader {
 
     val scf = new SparkConf().setAppName(s"Reading Table ${args(0)}")
     val sc = new SparkContext(scf)
-    val spark = SparkSession.builder().config(scf)
 
     val hBaseConf = HBaseConfiguration.create()
     hBaseConf.set(TableInputFormat.INPUT_TABLE, args(0))

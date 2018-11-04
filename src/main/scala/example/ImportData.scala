@@ -35,6 +35,7 @@ object ImportData {
     // push the data to HBase
     rdd.foreachPartition { part =>
       val hbc = HBaseConfiguration.create()
+      hbc.addResource("hbase-site.xml")
       val conn = ConnectionFactory.createConnection(hbc)
       val htable = conn.getTable(tn(table))
 
